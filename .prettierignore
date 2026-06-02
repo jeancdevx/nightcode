@@ -1,0 +1,13 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Lambda build outputs (esbuild)
+**/dist/
+build/
+
+# Lockfiles (auto-generated)
+bun.lock
+
+# Coverage reports
+coverage/
