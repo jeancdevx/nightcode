@@ -1,0 +1,111 @@
+import type { ScrollBoxRenderable } from '@opentui/core'
+import { useKeyboard } from '@opentui/react'
+import { useMemo, useRef, useState, type RefObject } from 'react'
+
+import { getFilteredCommands } from './filter-commands'
+import type { Command } from './types'
+
+type UseCommandMenuReturn = {
+  showCommandMenu: boolean
+  commandQuery: string
+  selectedIndex: number
+  scrollRef: RefObject<ScrollBoxRenderable | null>
+  handleContentChange: (text: string) => void
+  resolveCommand: (index: number) => Command | undefined
+  setSelectedIndex: (index: number) => void
+}
+
+const useCommandMenu = (): UseCommandMenuReturn => {
+  const [textValue, setTextValue] = useState('')
+  const [selectedIndex, setSelectedIndex] = useState(0)
+  const [showCommandMenu, setShowCommandMenu] = useState(false)
+
+  const scrollRef = useRef<ScrollBoxRenderable | null>(null)
+
+  const commandQuery =
+    showCommandMenu && textValue.startsWith('/') ? textValue.slice(1) : ''
+
+  const filteredCommands = useMemo(
+    () => getFilteredCommands(commandQuery),
+    [commandQuery]
+  )
+
+  const handleContentChange = (text: string) => {
+    setTextValue(text)
+    setSelectedIndex(0)
+
+    // jump back to top of list when the user types a new caracter
+    const scrollBox = scrollRef.current
+    if (scrollBox) scrollBox.scrollTo(0)
+
+    const prefixMatch = text.startsWith('/') ? text.slice(1) : null
+    if (prefixMatch !== null && !prefixMatch.includes(' ')) {
+      setShowCommandMenu(true)
+    } else {
+      setShowCommandMenu(false)
+    }
+  }
+
+  // resolve a command at a specific index (returns the command, caller, handles execution)
+  const resolveCommand = (index: number): Command | undefined => {
+    const command = filteredCommands[index]
+
+    if (command) setShowCommandMenu(false)
+
+    return command
+  }
+
+  // arrow keys move selection; the list follows along when the highlighted item goes out of view
+  useKeyboard(key => {
+    if (!showCommandMenu) return
+
+    if (key.name === 'scape') {
+      key.preventDefault()
+      setShowCommandMenu(false)
+    } else if (key.name === 'up') {
+      key.preventDefault()
+      setSelectedIndex(i => {
+        const newIndex = Math.max(0, i - 1)
+
+        // keep the highlighted item visible when arrowing past the edge
+        const sb = scrollRef.current
+        if (sb && newIndex < sb.scrollTop) {
+          sb.scrollTo(newIndex)
+        }
+
+        return newIndex
+      })
+    } else if (key.name === 'down') {
+      key.preventDefault()
+      setSelectedIndex(i => {
+        if (filteredCommands.length === 0) return 0
+
+        const newIndex = Math.min(filteredCommands.length - 1, i + 1)
+        const sb = scrollRef.current
+
+        if (sb) {
+          const viewportHeight = sb.viewport.height
+          const visibleEnd = sb.scrollTop + viewportHeight - 1
+
+          if (newIndex > visibleEnd) {
+            sb.scrollTo(newIndex - viewportHeight + 1)
+          }
+        }
+
+        return newIndex
+      })
+    }
+  })
+
+  return {
+    showCommandMenu,
+    commandQuery,
+    selectedIndex,
+    scrollRef,
+    handleContentChange,
+    resolveCommand,
+    setSelectedIndex
+  }
+}
+
+export { useCommandMenu }
