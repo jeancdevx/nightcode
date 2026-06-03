@@ -72,8 +72,12 @@ const InputBar = ({ onSubmit, disabled = false }: InputBarProps) => {
       textarea.setText('')
 
       if (command.action) {
-        command.action({
-          exit: () => renderer.destroy()
+        void Promise.resolve(
+          command.action({
+            exit: () => renderer.destroy()
+          })
+        ).catch(err => {
+          textarea.insertText(`Error: ${err.message || 'Unknown error'} `)
         })
       } else {
         textarea.insertText(command.value + ' ')
