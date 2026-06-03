@@ -1,4 +1,5 @@
 import js from '@eslint/js'
+import reactHooks from 'eslint-plugin-react-hooks'
 import { defineConfig } from 'eslint/config'
 import globals from 'globals'
 import tseslint from 'typescript-eslint'
@@ -16,6 +17,9 @@ export default defineConfig([
   {
     files: ['packages/*/src/**/*.{ts,tsx}'],
     extends: [js.configs.recommended, ...tseslint.configs.recommended],
+    plugins: {
+      'react-hooks': reactHooks
+    },
     languageOptions: {
       globals: globals.node,
       parserOptions: {
@@ -34,7 +38,9 @@ export default defineConfig([
         'error',
         { prefer: 'type-imports', fixStyle: 'inline-type-imports' }
       ],
-      '@typescript-eslint/no-non-null-assertion': 'warn'
+      '@typescript-eslint/no-non-null-assertion': 'warn',
+      'react-hooks/rules-of-hooks': 'error',
+      'react-hooks/exhaustive-deps': 'warn'
     }
   }
 ])
