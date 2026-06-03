@@ -47,10 +47,13 @@ const useCommandMenu = (): UseCommandMenuReturn => {
   }
 
   // resolve a command at a specific index (returns the command, caller, handles execution)
-  const resolveCommand = (index: number): Command | undefined => (
-    filteredCommands[index] && setShowCommandMenu(false),
-    filteredCommands[index]
-  )
+  const resolveCommand = (index: number): Command | undefined => {
+    const command = filteredCommands[index]
+
+    if (command) setShowCommandMenu(false)
+
+    return command
+  }
 
   // arrow keys move selection; the list follows along when the highlighted item goes out of view
   useKeyboard(key => {
